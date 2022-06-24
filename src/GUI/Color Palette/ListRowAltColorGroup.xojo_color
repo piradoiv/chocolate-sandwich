@@ -1,0 +1,9 @@
+#tag ColorGroup
+	CodeName=ListRowAltColorGroup
+	#tag Color
+		Type=1
+		Platform=1
+		Light=F4F4F400
+		Dark=12121200
+	#tag EndColor
+#tag EndColorGroup

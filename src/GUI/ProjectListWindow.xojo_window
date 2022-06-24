@@ -1,5 +1,5 @@
 #tag DesktopWindow
-Begin DesktopWindow ProjectsWindow
+Begin DesktopWindow ProjectListWindow
    Backdrop        =   0
    BackgroundColor =   &cFFFFFF
    Composite       =   False
@@ -9,7 +9,7 @@ Begin DesktopWindow ProjectsWindow
    HasCloseButton  =   True
    HasFullScreenButton=   False
    HasMaximizeButton=   False
-   HasMinimizeButton=   True
+   HasMinimizeButton=   False
    Height          =   400
    ImplicitInstance=   True
    MacProcID       =   0
@@ -30,10 +30,10 @@ Begin DesktopWindow ProjectsWindow
       Height          =   400
       Index           =   -2147483648
       Left            =   0
-      LockBottom      =   False
+      LockBottom      =   True
       LockedInPosition=   False
       LockLeft        =   True
-      LockRight       =   False
+      LockRight       =   True
       LockTop         =   True
       PanelCount      =   2
       Panels          =   ""
@@ -48,13 +48,157 @@ Begin DesktopWindow ProjectsWindow
       Value           =   0
       Visible         =   True
       Width           =   600
+      Begin DesktopListBox ProjectListBox
+         AllowAutoDeactivate=   True
+         AllowAutoHideScrollbars=   True
+         AllowExpandableRows=   False
+         AllowFocusRing  =   False
+         AllowResizableColumns=   False
+         AllowRowDragging=   False
+         AllowRowReordering=   False
+         Bold            =   False
+         ColumnCount     =   1
+         ColumnWidths    =   ""
+         DefaultRowHeight=   32
+         DropIndicatorVisible=   False
+         Enabled         =   True
+         FontName        =   "System"
+         FontSize        =   0.0
+         FontUnit        =   0
+         GridLineStyle   =   0
+         HasBorder       =   True
+         HasHeader       =   True
+         HasHorizontalScrollbar=   False
+         HasVerticalScrollbar=   True
+         HeadingIndex    =   -1
+         Height          =   402
+         Index           =   -2147483648
+         InitialParent   =   "Pages"
+         InitialValue    =   "Recent Projects"
+         Italic          =   False
+         Left            =   -1
+         LockBottom      =   True
+         LockedInPosition=   False
+         LockLeft        =   True
+         LockRight       =   False
+         LockTop         =   True
+         RequiresSelection=   False
+         RowSelectionType=   0
+         Scope           =   0
+         TabIndex        =   0
+         TabPanelIndex   =   1
+         TabStop         =   True
+         Tooltip         =   ""
+         Top             =   -1
+         Transparent     =   False
+         Underline       =   False
+         Visible         =   True
+         Width           =   245
+         _ScrollWidth    =   -1
+      End
+      Begin DesktopButton NewProjectButton
+         AllowAutoDeactivate=   True
+         Bold            =   False
+         Cancel          =   False
+         Caption         =   "New Project"
+         Default         =   True
+         Enabled         =   True
+         FontName        =   "System"
+         FontSize        =   0.0
+         FontUnit        =   0
+         Height          =   20
+         Index           =   -2147483648
+         InitialParent   =   "Pages"
+         Italic          =   False
+         Left            =   467
+         LockBottom      =   True
+         LockedInPosition=   False
+         LockLeft        =   False
+         LockRight       =   True
+         LockTop         =   False
+         MacButtonStyle  =   0
+         Scope           =   0
+         TabIndex        =   2
+         TabPanelIndex   =   1
+         TabStop         =   True
+         Tooltip         =   ""
+         Top             =   360
+         Transparent     =   False
+         Underline       =   False
+         Visible         =   True
+         Width           =   113
+      End
    End
 End
 #tag EndDesktopWindow
 
 #tag WindowCode
+	#tag Event
+		Sub Opening()
+		  ReloadProjects
+		End Sub
+	#tag EndEvent
+
+
+	#tag MenuHandler
+		Function FileNewProjectItem(index as Integer) As Boolean Handles FileNewProjectItem.Action
+			App.NewDocument
+			Return True
+		End Function
+	#tag EndMenuHandler
+
+	#tag MenuHandler
+		Function FileOpenItem() As Boolean Handles FileOpenItem.Action
+			App.ActionOpenProject
+			Return True
+		End Function
+	#tag EndMenuHandler
+
+
+	#tag Method, Flags = &h21
+		Private Sub ReloadProjects()
+		  ProjectListBox.RemoveAllRows
+		  For Each project As AppProject In App.Settings.KnownProjects
+		    ProjectListBox.AddRow(project.Name)
+		    ProjectListBox.RowTagAt(ProjectListBox.LastAddedRowIndex) = New WeakRef(project)
+		  Next
+		End Sub
+	#tag EndMethod
+
+
 #tag EndWindowCode
 
+#tag Events ProjectListBox
+	#tag Event
+		Sub KeyUp(key As String)
+		  Var code As Integer = Asc(key)
+		  If code <> 8 Or Me.SelectedRowCount = 0 Then Return
+		  
+		  For i As Integer = Me.LastRowIndex DownTo 0
+		    If Not Me.RowSelectedAt(i) Then Continue
+		    
+		    Var projectRef As WeakRef = Me.RowTagAt(i)
+		    Var project As AppProject = AppProject(projectRef.Value)
+		    App.Settings.RemoveProject(project)
+		    Me.RemoveRowAt(i)
+		  Next
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Function PaintCellBackground(g As Graphics, row As Integer, column As Integer) As Boolean
+		  g.DrawingColor = If(row Mod 2 = 0, ListRowColorGroup, ListRowAltColorGroup)
+		  g.FillRectangle(0, 0, g.Width, g.Height)
+		End Function
+	#tag EndEvent
+#tag EndEvents
+#tag Events NewProjectButton
+	#tag Event
+		Sub Pressed()
+		  App.NewDocument
+		  Self.Close
+		End Sub
+	#tag EndEvent
+#tag EndEvents
 #tag ViewBehavior
 	#tag ViewProperty
 		Name="Name"
